@@ -18,15 +18,19 @@ class InteractiveRecord
   end
 
   def self.find_by(attr)
-    #accounts for when an attribute value is an integer
-    #executes the SQL to find a row by the attribute passed
-    #into the method
-
     sql = <<-SQL
       SELECT * FROM #{self.table_name}
-      WHERE ? = ?;
+      WHERE #{attr.keys.first.to_s} = '#{attr.values.first.to_s}';
     SQL
-    #NEEDS SAVE FIRST FOR TEST
+    DB[:conn].execute(sql)
+  end
+
+  def self.find_by_name(name)
+    sql = <<-SQL
+      SELECT * FROM #{self.table_name}
+      WHERE name = ?;
+    SQL
+    DB[:conn].execute(sql, name)
   end
 
   def col_names_for_insert
@@ -46,11 +50,19 @@ class InteractiveRecord
     self.class.table_name
   end
 
-
-
-
-
-
+  def save
+    sql = <<-SQL
+      INSERT INTO #{self.table_name_for_insert} (#{self.col_names_for_insert})
+      VALUES (#{self.values_for_insert});
+    SQL
+    DB[:conn].execute(sql)
+    # Here I set ID
+    sql = <<-SQL
+      SELECT id FROM #{self.table_name_for_insert}
+      ORDER BY id DESC LIMIT 1;
+    SQL
+    @id = DB[:conn].execute(sql).first["id"]
+  end
 
 
 end
